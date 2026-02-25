@@ -57,9 +57,11 @@ void default_constants() {
 // sawping
 ///
 void sob() {
-  chassis.odom_xyt_set(12_in,-48_in, -90_deg);
+  chassis.odom_xyt_set(0_in,-48_in, 270_deg);
+  pros::delay(1000);
+  //imu.set_heading(270);
   distanceReset(RESET_LEFT | RESET_BACK);
-  
+  /*
   chassis.pid_odom_set({{48_in,-48_in}, rev, DRIVE_SPEED});
   chassis.pid_wait();
   /*
@@ -67,7 +69,7 @@ void sob() {
   chassis.pid_wait();
   tongue.set_value(1);
   pros::delay(500);
-  
+
   distanceReset(RESET_LEFT);
   rollers::set_mode(rollers::Mode::Store);
   chassis.pid_odom_set({{48_in,-58_in}, fwd, DRIVE_SPEED});

@@ -262,7 +262,7 @@ void opcontrol() {
 
     chassis.opcontrol_arcade_standard(ez::SPLIT);   // Standard split arcade
     
-    wing.set_value(master.get_digital(pros::E_CONTROLLER_DIGITAL_R2));
+    wing.set_value(!(master.get_digital(pros::E_CONTROLLER_DIGITAL_R2)));
     
     if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT))tval = !tval;
     tongue.set_value(tval);

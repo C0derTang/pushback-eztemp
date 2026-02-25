@@ -23,5 +23,3 @@ inline pros::adi::DigitalOut wing('g');
 inline pros::Distance backWall(21);
 inline pros::Distance leftWall(4);
 inline pros::Distance rightWall(9);
-
-inline pros::IMU imu(13);

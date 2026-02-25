@@ -1,33 +1,19 @@
-// distance_reset.hpp
 #pragma once
+
 #include <cstdint>
 
-// Choose which sensors are allowed/required for the reset.
-// You can pass any combination of these.
-enum DistanceResetMask : uint8_t {
-  RESET_NONE  = 0,
-  RESET_LEFT  = 1 << 0,
-  RESET_RIGHT = 1 << 1,
-  RESET_BACK  = 1 << 2,
-};
+// Bitmask flags
+constexpr uint8_t RESET_LEFT  = 1 << 0;
+constexpr uint8_t RESET_RIGHT = 1 << 1;
+constexpr uint8_t RESET_BACK  = 1 << 2;
+// (Optional if you add a front sensor later)
+// constexpr uint8_t RESET_FRONT = 1 << 3;
 
-// Returns true if it updated at least ONE component of pose (X and/or Y)
-// and (optionally) applied it to odom.
-bool distanceReset(uint8_t mask = (RESET_LEFT | RESET_BACK));
-/*
-
-// Full reset: left + back (X & Y)
-distanceReset(RESET_LEFT | RESET_BACK);
-
-// Full reset: right + back
-distanceReset(RESET_RIGHT | RESET_BACK);
-
-// Partial reset: ONLY X using left or right
-distanceReset(RESET_LEFT);        // updates X only (if valid), keeps Y from odom
-distanceReset(RESET_RIGHT);       // updates X only (if valid), keeps Y from odom
-distanceReset(RESET_LEFT | RESET_RIGHT); // uses left if valid else right
-
-// Partial reset: ONLY Y using back
-distanceReset(RESET_BACK);        // updates Y only (if valid), keeps X from odom
-
-*/
+/**
+ * Resets chassis odom X and/or Y using distance sensors to field walls.
+ *
+ * @param flags bitmask of RESET_LEFT/RESET_RIGHT/RESET_BACK
+ * @param min_mm ignore readings below this (noise / invalid)
+ * @param max_mm ignore readings above this (out of range / invalid)
+ */
+void distanceReset(uint8_t flags, double min_mm = 20.0, double max_mm = 2000.0);

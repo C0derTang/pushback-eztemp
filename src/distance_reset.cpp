@@ -1,55 +1,11 @@
-// distance_reset.cpp
 #include "distance_reset.hpp"
 
-#include "subsystems.hpp"  // imu, leftWall, rightWall, backWall, chassis
 #include <cmath>
-#include <optional>
+#include <algorithm>
 
-// ======================================
-// Coordinate conventions (CENTER ORIGIN)
-// ======================================
-//
-// GLOBAL / FIELD frame (inches):
-//   (0,0) = CENTER of the field
-//   +x = right,  -x = left
-//   +y = forward, -y = backward
-//
-// Field size (typical VRC): 144" x 144"
-//   Left wall:  x = -FIELD_W/2
-//   Right wall: x = +FIELD_W/2
-//   Back wall:  y = -FIELD_H/2
-//   Front wall: y = +FIELD_H/2
-//
-// ROBOT frame (inches):
-//   +x = right
-//   +y = forward
-//
-// Heading theta (radians):
-//   theta = 0   => robot +y aligns with global +y (forward)
-//   theta = +90 => robot +y aligns with global +x (right)
-//   theta is CCW-positive.
-//
-// Your IMU increases clockwise, so we negate it.
-//
-// ======================================
+#include "subsystems.hpp"
+#include "EZ-Template/api.hpp"
 
-struct Pose2D {
-  double x;      // inches
-  double y;      // inches
-  double theta;  // radians (global)
-};
-
-// ---- Field ----
-static constexpr double FIELD_W_IN = 144.0;
-static constexpr double FIELD_H_IN = 144.0;
-
-static constexpr double WALL_LEFT_X  = -FIELD_W_IN / 2.0;
-static constexpr double WALL_RIGHT_X = +FIELD_W_IN / 2.0;
-static constexpr double WALL_BACK_Y  = -FIELD_H_IN / 2.0;
-static constexpr double WALL_FRONT_Y = +FIELD_H_IN / 2.0;  // not used here
-
-// ---- Sensor offsets from robot CENTER (robot frame), inches ----
-// Per your specs:
 static constexpr double LEFT_OFF_X_IN  = -3.5;
 static constexpr double LEFT_OFF_Y_IN  = +5.75;
 
@@ -59,196 +15,121 @@ static constexpr double RIGHT_OFF_Y_IN = +5.75;
 static constexpr double BACK_OFF_X_IN  = +5.4;
 static constexpr double BACK_OFF_Y_IN  = -1.5;
 
-// ---- Sensor look directions (robot frame unit vectors) ----
-static constexpr double LEFT_DIR_X  = -1.0;
-static constexpr double LEFT_DIR_Y  =  0.0;
+static constexpr double WALL_LEFT_X  = -72.0;
+static constexpr double WALL_RIGHT_X = +72.0;
+static constexpr double WALL_BACK_Y  = -72.0;
+static constexpr double WALL_FRONT_Y = +72.0;
 
-static constexpr double RIGHT_DIR_X = +1.0;
-static constexpr double RIGHT_DIR_Y =  0.0;
-
-static constexpr double BACK_DIR_X  =  0.0;
-static constexpr double BACK_DIR_Y  = -1.0;
-
-// PROS Distance returns millimeters
 static inline double mm_to_in(double mm) { return mm / 25.4; }
 
-// Valid distance range filter (tune)
-static constexpr double MIN_VALID_IN = 1.0;
-static constexpr double MAX_VALID_IN = 120.0;
-
-static inline double deg_to_rad(double deg) { return deg * M_PI / 180.0; }
-static inline double rad_to_deg(double rad) { return rad * 180.0 / M_PI; }
-
-// IMU increases clockwise; math expects CCW-positive.
-// If you need an offset, do: return deg_to_rad(-(imuDeg - offsetDeg));
-static inline double headingDegToThetaRad(double imuDeg) {
-  return deg_to_rad(-imuDeg);
+static inline double wrap_deg_360(double deg) {
+  deg = std::fmod(deg, 360.0);
+  if (deg < 0) deg += 360.0;
+  return deg;
 }
 
-// Rotate robot-frame vector (x right, y forward) into global frame,
-// where theta is CCW from global +y (forward).
-static inline void rotRobotToGlobal(double rx, double ry, double theta, double &gx, double &gy) {
-  const double c = std::cos(theta);
-  const double s = std::sin(theta);
+struct Vec2 { double x, y; };
 
-  // theta=0 => (rx,ry) stays (rx,ry)
-  // theta=+90deg => robot forward (+y) becomes global +x
-  gx = rx * c + ry * s;
-  gy = -rx * s + ry * c;
+static inline Vec2 forward_unit(double heading_deg) {
+  double h = heading_deg * M_PI / 180.0;
+  return { std::sin(h), std::cos(h) };
 }
 
-static inline std::optional<double> readDistInches(pros::Distance &d) {
-  const double in = mm_to_in(static_cast<double>(d.get()));
-  if (in < MIN_VALID_IN || in > MAX_VALID_IN) return std::nullopt;
-  return in;
+static inline Vec2 right_unit(double heading_deg) {
+  double h = heading_deg * M_PI / 180.0;
+  return { std::cos(h), -std::sin(h) };
 }
 
-// Solve X from LEFT wall using left sensor ray
-static inline std::optional<double> solveRobotXFromLeft(
-    double wallLeftX, double dL,
-    double left_off_gx, double left_dir_gx) {
-  if (std::fabs(left_dir_gx) < 1e-6) return std::nullopt;
-  return wallLeftX - dL * left_dir_gx - left_off_gx;
+static inline Vec2 offset_robot_to_global(double heading_deg, double ox_in, double oy_in) {
+  const Vec2 f = forward_unit(heading_deg);
+  const Vec2 r = right_unit(heading_deg);
+  return { ox_in * r.x + oy_in * f.x, ox_in * r.y + oy_in * f.y };
 }
 
-// Solve X from RIGHT wall using right sensor ray
-static inline std::optional<double> solveRobotXFromRight(
-    double wallRightX, double dR,
-    double right_off_gx, double right_dir_gx) {
-  if (std::fabs(right_dir_gx) < 1e-6) return std::nullopt;
-  return wallRightX - dR * right_dir_gx - right_off_gx;
+static inline bool valid_mm(double mm, double min_mm, double max_mm) {
+  return (mm >= min_mm && mm <= max_mm);
 }
 
-// Solve Y from BACK wall using back sensor ray
-static inline std::optional<double> solveRobotYFromBack(
-    double wallBackY, double dB,
-    double back_off_gy, double back_dir_gy) {
-  if (std::fabs(back_dir_gy) < 1e-6) return std::nullopt;
-  return wallBackY - dB * back_dir_gy - back_off_gy;
-}
+static constexpr double EPS = 1e-6;
 
-// ---------- IMPORTANT ----------
-// Partial reset requires "current pose" getters and a pose setter.
-// Different EZ-Template versions name these differently.
-// Below we provide a small adapter layer.
-//
-// ✅ Edit these 3 functions to match your EZ-Template API if needed.
-// -------------------------------
+static void apply_sensor_ray(
+    double heading_deg,
+    double d_in,
+    double off_x_in, double off_y_in,
+    Vec2 u,                // beam direction in global coords (unit-ish)
+    bool &have_x, bool &have_y,
+    double &x_sum, int &x_n,
+    double &y_sum, int &y_n
+) {
+  const Vec2 off = offset_robot_to_global(heading_deg, off_x_in, off_y_in);
 
-// Try to read current odom pose. Return nullopt if you don't have getters.
-static std::optional<Pose2D> getCurrentPose() {
-  // Examples you might have (uncomment what exists in your project):
-  //
-  auto p = chassis.odom_pose_get() ;
-  return Pose2D{p.x, p.y, deg_to_rad(p.theta)};
-}
+  // If the ray points more along X, it hits a vertical wall (x = const)
+  if (std::fabs(u.x) > std::fabs(u.y) + EPS) {
+    const double wall_x = (u.x > 0) ? WALL_RIGHT_X : WALL_LEFT_X;
 
-// Apply pose to odom. Return false if you haven't wired it yet.
-static bool setPoseToOdom(const Pose2D &p) {
-  // Uncomment ONE that compiles:
-  //
-  // chassis.set_pose(p.x, p.y, rad_to_deg(p.theta));
-  chassis.odom_xyt_set(p.x, p.y, rad_to_deg(p.theta));
-  // chassis.odom_set_pose({p.x, p.y, rad_to_deg(p.theta)});
-  //
-  return true;
-}
+    // wall_x = (cx + off.x) + u.x * d  => cx = wall_x - off.x - u.x*d
+    const double cx = wall_x - off.x - (u.x * d_in);
+    x_sum += cx; x_n++; have_x = true;
+  } else if (std::fabs(u.y) > EPS) {
+    // Otherwise it hits a horizontal wall (y = const)
+    const double wall_y = (u.y > 0) ? WALL_FRONT_Y : WALL_BACK_Y;
 
-// If you cannot read current pose, choose what to do when only one axis solves.
-// Option A: don't apply anything unless both axes solved.
-// Option B: apply solved axis and set the other axis to 0 (NOT recommended).
-static constexpr bool REQUIRE_GETTERS_FOR_PARTIAL = true;
-
-// Compute pose components from IMU + selected sensors.
-// Returns (maybeX, maybeY, theta). Theta is always computed.
-struct PartialSolve {
-  std::optional<double> x;
-  std::optional<double> y;
-  double theta;
-};
-
-static std::optional<PartialSolve> solvePartial(uint8_t mask) {
-  const bool wantLeft  = (mask & RESET_LEFT)  != 0;
-  const bool wantRight = (mask & RESET_RIGHT) != 0;
-  const bool wantBack  = (mask & RESET_BACK)  != 0;
-
-  // Must request at least one sensor
-  if (!wantLeft && !wantRight && !wantBack) return std::nullopt;
-
-  const double theta = headingDegToThetaRad(imu.get_heading());
-
-  // Read only requested sensors
-  std::optional<double> dL, dR, dB;
-  if (wantLeft)  dL = readDistInches(leftWall);
-  if (wantRight) dR = readDistInches(rightWall);
-  if (wantBack)  dB = readDistInches(backWall);
-
-  // Rotate offsets + directions
-  double left_off_gx, left_off_gy, left_dir_gx, left_dir_gy;
-  rotRobotToGlobal(LEFT_OFF_X_IN, LEFT_OFF_Y_IN, theta, left_off_gx, left_off_gy);
-  rotRobotToGlobal(LEFT_DIR_X, LEFT_DIR_Y, theta, left_dir_gx, left_dir_gy);
-
-  double right_off_gx, right_off_gy, right_dir_gx, right_dir_gy;
-  rotRobotToGlobal(RIGHT_OFF_X_IN, RIGHT_OFF_Y_IN, theta, right_off_gx, right_off_gy);
-  rotRobotToGlobal(RIGHT_DIR_X, RIGHT_DIR_Y, theta, right_dir_gx, right_dir_gy);
-
-  double back_off_gx, back_off_gy, back_dir_gx, back_dir_gy;
-  rotRobotToGlobal(BACK_OFF_X_IN, BACK_OFF_Y_IN, theta, back_off_gx, back_off_gy);
-  rotRobotToGlobal(BACK_DIR_X, BACK_DIR_Y, theta, back_dir_gx, back_dir_gy);
-
-  PartialSolve out;
-  out.theta = theta;
-
-  // Y from back wall if requested & valid
-  if (wantBack && dB) {
-    out.y = solveRobotYFromBack(WALL_BACK_Y, *dB, back_off_gy, back_dir_gy);
+    // wall_y = (cy + off.y) + u.y * d  => cy = wall_y - off.y - u.y*d
+    const double cy = wall_y - off.y - (u.y * d_in);
+    y_sum += cy; y_n++; have_y = true;
   }
-
-  // X from left/right if requested & valid
-  // Preference: LEFT first if both selected and both valid
-  if (wantLeft && dL) {
-    out.x = solveRobotXFromLeft(WALL_LEFT_X, *dL, left_off_gx, left_dir_gx);
-  }
-  if (!out.x && wantRight && dR) {
-    out.x = solveRobotXFromRight(WALL_RIGHT_X, *dR, right_off_gx, right_dir_gx);
-  }
-
-  return out;
 }
 
-bool distanceReset(uint8_t mask) {
-  auto partialOpt = solvePartial(mask);
-  if (!partialOpt) return false;
+void distanceReset(uint8_t flags, double min_mm, double max_mm) {
+  const double cur_x_in = chassis.odom_x_get();
+  const double cur_y_in = chassis.odom_y_get();
+  const double heading_deg = wrap_deg_360(chassis.odom_theta_get());
 
-  const auto partial = *partialOpt;
+  const Vec2 f = forward_unit(heading_deg);
+  const Vec2 r = right_unit(heading_deg);
 
-  // Need at least one solved axis to do anything useful
-  if (!partial.x && !partial.y) return false;
+  bool have_x = false, have_y = false;
+  double x_sum = 0.0, y_sum = 0.0;
+  int x_n = 0, y_n = 0;
 
-  // If partial reset is allowed, we keep the other axis from current odom pose.
-  Pose2D target{0.0, 0.0, partial.theta};
-
-  if (partial.x && partial.y) {
-    // Full reset
-    target.x = *partial.x;
-    target.y = *partial.y;
-  } else {
-    // Partial reset
-    auto curOpt = getCurrentPose();
-    if (!curOpt) {
-      if (REQUIRE_GETTERS_FOR_PARTIAL) return false;
-      // If you insist on applying anyway, you could set missing axis to 0 here.
-      target.x = partial.x.value_or(0.0);
-      target.y = partial.y.value_or(0.0);
-    } else {
-      const Pose2D cur = *curOpt;
-      target.x = partial.x.value_or(cur.x);
-      target.y = partial.y.value_or(cur.y);
-      // Heading: choose whether you want to keep current heading or override with IMU heading.
-      // Here we override with IMU-derived heading (more consistent for wall resets).
-      target.theta = partial.theta;
+  // Left sensor beam points robot-left = -r
+  if (flags & RESET_LEFT) {
+    const double mm = static_cast<double>(leftWall.get());
+    if (valid_mm(mm, min_mm, max_mm)) {
+      const double d_in = mm_to_in(mm);
+      apply_sensor_ray(heading_deg, d_in, LEFT_OFF_X_IN, LEFT_OFF_Y_IN,
+                       Vec2{-r.x, -r.y},
+                       have_x, have_y, x_sum, x_n, y_sum, y_n);
     }
   }
 
-  return setPoseToOdom(target);
+  // Right sensor beam points robot-right = +r
+  if (flags & RESET_RIGHT) {
+    const double mm = static_cast<double>(rightWall.get());
+    if (valid_mm(mm, min_mm, max_mm)) {
+      const double d_in = mm_to_in(mm);
+      apply_sensor_ray(heading_deg, d_in, RIGHT_OFF_X_IN, RIGHT_OFF_Y_IN,
+                       Vec2{r.x, r.y},
+                       have_x, have_y, x_sum, x_n, y_sum, y_n);
+    }
+  }
+
+  // Back sensor beam points robot-back = -f
+  if (flags & RESET_BACK) {
+    const double mm = static_cast<double>(backWall.get());
+    if (valid_mm(mm, min_mm, max_mm)) {
+      const double d_in = mm_to_in(mm);
+      apply_sensor_ray(heading_deg, d_in, BACK_OFF_X_IN, BACK_OFF_Y_IN,
+                       Vec2{-f.x, -f.y},
+                       have_x, have_y, x_sum, x_n, y_sum, y_n);
+    }
+  }
+
+  double new_x_in = cur_x_in;
+  double new_y_in = cur_y_in;
+
+  if (have_x && x_n > 0) new_x_in = x_sum / x_n;
+  if (have_y && y_n > 0) new_y_in = y_sum / y_n;
+
+  chassis.odom_xyt_set(new_x_in * 1_in, new_y_in * 1_in, heading_deg * 1_deg);
 }

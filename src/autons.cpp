@@ -1,5 +1,6 @@
 #include "autons.hpp"
 #include "distance_reset.hpp"
+#include "globals.hpp"
 #include "rollers.hpp"
 #include "main.h"
 #include "subsystems.hpp"
@@ -10,7 +11,7 @@
 /////
 
 // These are out of 127
-const int DRIVE_SPEED = 110;
+const int DRIVE_SPEED = 127;
 const int TURN_SPEED = 90;
 const int SWING_SPEED = 110;
 
@@ -57,28 +58,37 @@ void default_constants() {
 // sawping
 ///
 void sob() {
+  auton_running = true;
+  rollers::set_voltage(12000);
   chassis.odom_xyt_set(0_in,-48_in, 270_deg);
-  pros::delay(1000);
-  //imu.set_heading(270);
+  pros::delay(670);
   distanceReset(RESET_LEFT | RESET_BACK);
-  /*
-  chassis.pid_odom_set({{48_in,-48_in}, rev, DRIVE_SPEED});
-  chassis.pid_wait();
-  /*
+  
+  chassis.pid_odom_set({{50_in,-48_in}, rev, DRIVE_SPEED});
+  chassis.pid_wait_quick();
+  
   chassis.pid_turn_set(180, TURN_SPEED);
-  chassis.pid_wait();
+  chassis.pid_wait_quick();
+  
   tongue.set_value(1);
   pros::delay(500);
 
   distanceReset(RESET_LEFT);
   rollers::set_mode(rollers::Mode::Store);
-  chassis.pid_odom_set({{48_in,-58_in}, fwd, DRIVE_SPEED});
-  chassis.pid_wait();
-  pros::delay(500);
-  chassis.pid_odom_set({{48_in,-30_in}, rev, DRIVE_SPEED});
-  chassis.pid_wait();
+  chassis.pid_odom_set({{48_in,-60_in}, fwd, DRIVE_SPEED});
+  chassis.pid_wait_quick();
+  pros::delay(640);
+  chassis.pid_odom_set({{49_in,-25_in}, rev, DRIVE_SPEED});
+  chassis.pid_wait_quick_chain();
   rollers::set_mode(rollers::Mode::High);
-*/
+  pros::delay(2000);
+  chassis.pid_odom_set({{49_in,-48_in}, fwd, DRIVE_SPEED});
+  chassis.pid_wait_quick();
+  distanceReset(RESET_LEFT);
+    chassis.pid_turn_set(315, TURN_SPEED);
+    chassis.pid_wait_quick();
+
+  auton_running = false;
 }
 
 ///

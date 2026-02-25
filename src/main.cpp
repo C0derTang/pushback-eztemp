@@ -1,7 +1,9 @@
 #include "main.h"
 #include "autons.hpp"
+#include "pros/misc.hpp"
 #include "rollers.hpp"
 #include "subsystems.hpp"
+#include "globals.hpp"
 
 /////
 // For installation, upgrading, documentations, and tutorials, check out our website!
@@ -68,10 +70,10 @@ void initialize() {
 
   rollers::init(12000);
 
-  pros::Task lazylmao([&]() {
+  static pros::Task lazylmao([&]() {
   int velo = 12000; // you can keep this local or expose rollers::set_voltage
   while (true) {
-    if (!pros::c::competition_is_autonomous()) {
+    if (!auton_running) {
       using rollers::Mode;
 
       if (master.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) rollers::set_mode(Mode::Store);

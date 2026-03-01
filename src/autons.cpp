@@ -170,5 +170,63 @@ void sevBallRight() {
 // four ball mid 3 goal wing
 ///
 void fourThreeLeft() {
+  auton_running = true;
+  rollers::set_voltage(12000);
+  chassis.odom_xyt_set(0_in,-48_in, 90_deg);
+  pros::delay(10);
+  distanceReset(RESET_RIGHT | RESET_BACK);
+  
+  chassis.pid_odom_set({{-49_in,-48_in}, rev, 80});
+  chassis.pid_wait();
+  
+  chassis.pid_turn_set(180, TURN_SPEED);
+  chassis.pid_wait_quick_chain();
+  
+  tongue.set_value(1);
+  pros::delay(200);
 
+  distanceReset(RESET_RIGHT);
+  rollers::set_mode(rollers::Mode::Store);
+  chassis.pid_odom_set({{-47_in,-60_in}, fwd, 70});
+  pros::delay(1100);
+  chassis.pid_odom_set({{-49_in,-28_in}, rev, 100});
+  pros::delay(800);
+  rollers::set_mode(rollers::Mode::High);
+  tongue.set_value(0);
+  pros::delay(1300);
+
+  chassis.pid_turn_set(90, TURN_SPEED);
+  chassis.pid_wait_quick();
+  rollers::set_mode(rollers::Mode::Store);
+  distanceReset(RESET_BACK | RESET_RIGHT);
+
+  chassis.pid_odom_set({{-30_in,-28_in}, fwd, 100});
+  pros::delay(200);
+  tongue.set_value(1);
+  chassis.pid_wait_quick();
+  
+  chassis.pid_turn_set(225, TURN_SPEED);
+  chassis.pid_wait_quick();
+  tongue.set_value(0);
+  
+  chassis.pid_odom_set({{-18_in,-18_in}, rev, 67});
+  
+  pros::delay(400);
+  rollers::set_mode(rollers::Mode::Mid);
+  chassis.pid_wait();
+  pros::delay(1400);
+  chassis.odom_xy_set(-10_in,-10_in);
+
+  
+  chassis.pid_odom_set({{-33_in,-30_in}, fwd, 90});
+  rollers::set_mode(rollers::Mode::Stop);
+  chassis.pid_wait_quick();
+  chassis.pid_turn_set(180, TURN_SPEED);
+  chassis.pid_wait_quick();
+  distanceReset(RESET_RIGHT);
+  wing.set_value(0);
+  chassis.pid_odom_set({{-36_in,-12_in}, rev, 100});
+  chassis.pid_wait_quick();
+
+  auton_running = false;
 }

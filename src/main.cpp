@@ -66,7 +66,7 @@ void initialize() {
   chassis.initialize();
   ez::as::initialize();
   master.rumble(chassis.drive_imu_calibrated() ? "." : "---");
-  chassis.pid_tuner_full_enable(false);
+  chassis.pid_tuner_full_enable(true);
 
   rollers::init(12000);
 
@@ -255,6 +255,7 @@ void ez_template_extras() {
  */
 
 void opcontrol() {
+  auton_running = false;
   // This is preference to what you like to drive on
   chassis.drive_brake_set(MOTOR_BRAKE_COAST);
   bool tval = false;
@@ -266,7 +267,7 @@ void opcontrol() {
     
     wing.set_value(!(master.get_digital(pros::E_CONTROLLER_DIGITAL_R2)));
     
-    if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT))tval = !tval;
+    if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT)) tval = !tval;
     tongue.set_value(tval);
 
 

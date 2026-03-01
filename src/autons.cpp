@@ -1,6 +1,8 @@
 #include "autons.hpp"
 #include "distance_reset.hpp"
 #include "globals.hpp"
+#include "pros/device.hpp"
+#include "pros/rtos.hpp"
 #include "rollers.hpp"
 #include "main.h"
 #include "subsystems.hpp"
@@ -20,16 +22,17 @@ const int SWING_SPEED = 110;
 ///
 void default_constants() {
   // P, I, D, and Start I
-  chassis.pid_drive_constants_forward_set(25.0, 0.0, 232.75);         // Fwd/rev constants, used for odom and non odom motions
-  chassis.pid_drive_constants_backward_set(23.3, 0.0, 283.75);         // Fwd/rev constants, used for odom and non odom motions
-  chassis.pid_heading_constants_set(11.0, 0.0, 20.0);        // Holds the robot straight while going forward without odom
-  chassis.pid_turn_constants_set(9.6, 0.05, 55.5, 15.0);     // Turn in place constants
-  chassis.pid_swing_constants_set(7.4, 0.0, 87.5);           // Swing constants
-  chassis.pid_odom_angular_constants_set(10, 0.0, 57.75);    // Angular control for odom motions
-  chassis.pid_odom_boomerang_constants_set(6.7, 0.0, 38.25);  // Angular control for boomerang motions
+  chassis.pid_drive_constants_forward_set(21.2, 0.0, 90);         // Fwd/rev constants, used for odom and non odom motions
+  chassis.pid_drive_constants_backward_set(20.2, 0.0, 110);         // Fwd/rev constants, used for odom and non odom motions
+  chassis.pid_heading_constants_set(0.0, 0.0, 0.0);        // Holds the robot straight while going forward without odom
+  chassis.pid_turn_constants_set(9.6, 0.05, 55.5, 15.0);  
+  chassis.pid_swing_constants_set(0, 0.0, 0);           // Swing constants
+  chassis.pid_odom_angular_constants_set(14.2, 0.0, 100);    // Angular control for odom motions
+  chassis.pid_odom_boomerang_constants_set(0, 0.0, 0);  // Angular control for boomerang motions
 
   // Exit conditions
-  chassis.pid_turn_exit_condition_set(100_ms, 1_deg, 300_ms, 3_deg, 500_ms, 500_ms);
+
+  chassis.pid_turn_exit_condition_set(100_ms, 3_deg, 50000_ms, 7_deg, 500_ms, 500_ms);
   chassis.pid_swing_exit_condition_set(90_ms, 3_deg, 250_ms, 7_deg, 500_ms, 500_ms);
   chassis.pid_drive_exit_condition_set(90_ms, 1_in, 250_ms, 3_in, 500_ms, 500_ms);
   chassis.pid_odom_turn_exit_condition_set(100_ms, 1_deg, 300_ms, 3_deg, 500_ms, 750_ms);
@@ -61,33 +64,77 @@ void sob() {
   auton_running = true;
   rollers::set_voltage(12000);
   chassis.odom_xyt_set(0_in,-48_in, 270_deg);
-  pros::delay(670);
+  pros::delay(10);
   distanceReset(RESET_LEFT | RESET_BACK);
   
-  chassis.pid_odom_set({{50_in,-48_in}, rev, DRIVE_SPEED});
-  chassis.pid_wait_quick();
+  chassis.pid_odom_set({{49_in,-48_in}, rev, 80});
+  chassis.pid_wait();
   
   chassis.pid_turn_set(180, TURN_SPEED);
-  chassis.pid_wait_quick();
+  chassis.pid_wait_quick_chain();
   
   tongue.set_value(1);
-  pros::delay(500);
+  pros::delay(200);
 
   distanceReset(RESET_LEFT);
   rollers::set_mode(rollers::Mode::Store);
-  chassis.pid_odom_set({{48_in,-60_in}, fwd, DRIVE_SPEED});
-  chassis.pid_wait_quick();
-  pros::delay(640);
-  chassis.pid_odom_set({{49_in,-25_in}, rev, DRIVE_SPEED});
-  chassis.pid_wait_quick_chain();
+  chassis.pid_odom_set({{48_in,-59.8_in}, fwd, 70});
+  pros::delay(1200);
+  chassis.pid_odom_set({{49_in,-28_in}, rev, 100});
+  pros::delay(800);
   rollers::set_mode(rollers::Mode::High);
-  pros::delay(2000);
-  chassis.pid_odom_set({{49_in,-48_in}, fwd, DRIVE_SPEED});
-  chassis.pid_wait_quick();
-  distanceReset(RESET_LEFT);
-    chassis.pid_turn_set(315, TURN_SPEED);
-    chassis.pid_wait_quick();
+  tongue.set_value(0);
+  pros::delay(1000);
 
+  chassis.pid_turn_set(270, TURN_SPEED);
+  chassis.pid_wait_quick();
+  rollers::set_mode(rollers::Mode::Store);
+  //distanceReset(RESET_LEFT);
+
+  chassis.pid_odom_set({{12_in,-29_in}, fwd, 100});
+  pros::delay(600);
+  tongue.set_value(1);
+  pros::delay(270);
+  tongue.set_value(0);
+  chassis.pid_turn_set(270, TURN_SPEED);
+  chassis.pid_wait_quick();
+  //distanceReset(RESET_LEFT);
+  chassis.pid_drive_set(20_in, 70);
+  pros::delay(500);
+  tongue.set_value(1);
+  chassis.pid_wait_quick();
+  chassis.pid_turn_set(225_deg, TURN_SPEED);
+  chassis.pid_wait_quick_chain();
+
+  chassis.pid_odom_set({{-36_in,-46_in}, fwd, 90});
+  tongue.set_value(0);
+  chassis.pid_wait_quick();
+  chassis.pid_turn_set(180, TURN_SPEED);
+  chassis.pid_wait_quick();
+  distanceReset(RESET_RIGHT);
+  chassis.pid_odom_set({{-49_in,-30_in}, rev, 100});
+  pros::delay(200);
+  rollers::set_mode(rollers::Mode::High);
+  tongue.set_value(1);
+  pros::delay(1200);
+  chassis.odom_y_set(-30_in);
+
+  chassis.pid_odom_set({{-48_in,-59.75_in}, fwd, 85});
+  rollers::set_mode(rollers::Mode::Store);
+  pros::delay(1400);
+  distanceReset(RESET_RIGHT);
+  chassis.pid_odom_set({{-48_in,-48_in}, rev, 100});
+  chassis.pid_wait_quick();
+  distanceReset(RESET_RIGHT);
+
+  chassis.pid_turn_set(225_deg, TURN_SPEED);
+  chassis.pid_wait_quick();
+  tongue.set_value(0);
+  chassis.pid_odom_set({{-12_in,-12_in}, rev, 100});
+  pros::delay(1000);
+  rollers::set_mode(rollers::Mode::Mid);
+  chassis.pid_wait_quick();
+  pros::delay(2000);
   auton_running = false;
 }
 
@@ -95,12 +142,20 @@ void sob() {
 // 75 route
 ///
 void skills() {
+  auton_running = true;
+  chassis.pid_odom_set({{0_in,-48_in}, rev, DRIVE_SPEED});
+  chassis.pid_wait();
+  auton_running = false;
 }
 
 ///
 // 7ball hook wing left
 ///
 void sevBallLeft() {
+  auton_running = true;
+  chassis.pid_odom_set({{0_in,48_in}, fwd, DRIVE_SPEED});
+  chassis.pid_wait();
+  auton_running = false;
 
 }
 

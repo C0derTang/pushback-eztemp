@@ -67,7 +67,7 @@ void sob() {
   pros::delay(10);
   distanceReset(RESET_LEFT | RESET_BACK);
   
-  chassis.pid_odom_set({{49_in,-48_in}, rev, 80});
+  chassis.pid_odom_set({{48_in,-48_in}, rev, 80});
   chassis.pid_wait();
   
   chassis.pid_turn_set(180, TURN_SPEED);
@@ -78,7 +78,7 @@ void sob() {
 
   distanceReset(RESET_LEFT);
   rollers::set_mode(rollers::Mode::Store);
-  chassis.pid_odom_set({{48_in,-59.8_in}, fwd, 70});
+  chassis.pid_odom_set({{47_in,-60_in}, fwd, 70});
   pros::delay(1200);
   chassis.pid_odom_set({{49_in,-28_in}, rev, 100});
   pros::delay(800);
@@ -88,10 +88,10 @@ void sob() {
 
   chassis.pid_turn_set(270, TURN_SPEED);
   chassis.pid_wait_quick();
-  rollers::set_mode(rollers::Mode::Store);
   //distanceReset(RESET_LEFT);
 
   chassis.pid_odom_set({{12_in,-29_in}, fwd, 100});
+  rollers::set_mode(rollers::Mode::Store);
   pros::delay(600);
   tongue.set_value(1);
   pros::delay(270);
@@ -100,7 +100,7 @@ void sob() {
   chassis.pid_wait_quick();
   //distanceReset(RESET_LEFT);
   chassis.pid_drive_set(20_in, 70);
-  pros::delay(500);
+  pros::delay(300);
   tongue.set_value(1);
   chassis.pid_wait_quick();
   chassis.pid_turn_set(225_deg, TURN_SPEED);
@@ -110,7 +110,7 @@ void sob() {
   tongue.set_value(0);
   chassis.pid_wait_quick();
   chassis.pid_turn_set(180, TURN_SPEED);
-  chassis.pid_wait_quick();
+  chassis.pid_wait();
   distanceReset(RESET_RIGHT);
   chassis.pid_odom_set({{-49_in,-30_in}, rev, 100});
   pros::delay(200);
@@ -119,9 +119,9 @@ void sob() {
   pros::delay(1200);
   chassis.odom_y_set(-30_in);
 
-  chassis.pid_odom_set({{-48_in,-59.75_in}, fwd, 85});
+  chassis.pid_odom_set({{-49.5_in,-60_in}, fwd, 85});
   rollers::set_mode(rollers::Mode::Store);
-  pros::delay(1400);
+  pros::delay(1450);
   distanceReset(RESET_RIGHT);
   chassis.pid_odom_set({{-48_in,-48_in}, rev, 100});
   chassis.pid_wait_quick();
@@ -172,14 +172,14 @@ void sevBallRight() {
 void fourThreeLeft() {
   auton_running = true;
   rollers::set_voltage(12000);
-  chassis.odom_xyt_set(0_in,-48_in, 90_deg);
+  chassis.odom_xyt_set(-18_in,-48_in, 90_deg);
   pros::delay(10);
   distanceReset(RESET_RIGHT | RESET_BACK);
   
   chassis.pid_odom_set({{-49_in,-48_in}, rev, 80});
   chassis.pid_wait();
   
-  chassis.pid_turn_set(180, TURN_SPEED);
+  chassis.pid_turn_set(180, 100);
   chassis.pid_wait_quick_chain();
   
   tongue.set_value(1);
@@ -187,7 +187,7 @@ void fourThreeLeft() {
 
   distanceReset(RESET_RIGHT);
   rollers::set_mode(rollers::Mode::Store);
-  chassis.pid_odom_set({{-47_in,-60_in}, fwd, 70});
+  chassis.pid_odom_set({{-47_in,-60_in}, fwd, 80});
   pros::delay(1100);
   chassis.pid_odom_set({{-49_in,-28_in}, rev, 100});
   pros::delay(800);
@@ -195,38 +195,45 @@ void fourThreeLeft() {
   tongue.set_value(0);
   pros::delay(1300);
 
-  chassis.pid_turn_set(90, TURN_SPEED);
+  chassis.pid_turn_set(90, 127);
   chassis.pid_wait_quick();
-  rollers::set_mode(rollers::Mode::Store);
+  chassis.drive_set(0, 0);
+  pros::delay(100);
   distanceReset(RESET_BACK | RESET_RIGHT);
 
-  chassis.pid_odom_set({{-30_in,-28_in}, fwd, 100});
+  chassis.pid_odom_set({{-24_in,-24.5_in}, fwd, 100});
+  rollers::set_mode(rollers::Mode::Store);
+
   pros::delay(200);
   tongue.set_value(1);
   chassis.pid_wait_quick();
-  
-  chassis.pid_turn_set(225, TURN_SPEED);
-  chassis.pid_wait_quick();
-  tongue.set_value(0);
-  
-  chassis.pid_odom_set({{-18_in,-18_in}, rev, 67});
+  distanceReset(RESET_RIGHT);
+  pros::delay(100);
+  chassis.pid_turn_set(225, 127);
+  chassis.pid_wait();
+  chassis.pid_drive_set(-11., 80);
+
+  //chassis.pid_odom_set({{-16_in,-12_in, 225_deg}, rev, 70});
   
   pros::delay(400);
   rollers::set_mode(rollers::Mode::Mid);
   chassis.pid_wait();
-  pros::delay(1400);
-  chassis.odom_xy_set(-10_in,-10_in);
+  pros::delay(800);
 
+  //chassis.odom_xy_set(-10_in,-10_in);
+  
   
   chassis.pid_odom_set({{-33_in,-30_in}, fwd, 90});
+  tongue.set_value(0);
+
   rollers::set_mode(rollers::Mode::Stop);
+  /*
   chassis.pid_wait_quick();
   chassis.pid_turn_set(180, TURN_SPEED);
   chassis.pid_wait_quick();
   distanceReset(RESET_RIGHT);
   wing.set_value(0);
-  chassis.pid_odom_set({{-36_in,-12_in}, rev, 100});
+  chassis.pid_odom_set({{-38_in,-16_in}, rev, 100});
   chassis.pid_wait_quick();
-
-  auton_running = false;
+  pros::delay(3000);*/
 }

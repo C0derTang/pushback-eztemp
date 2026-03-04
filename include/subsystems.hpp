@@ -3,7 +3,6 @@
 #include "EZ-Template/api.hpp"
 #include "api.h"
 #include "pros/distance.hpp"
-#include "pros/imu.hpp"
 
 extern Drive chassis;
 

@@ -189,7 +189,7 @@ void fourThreeLeft() {
   rollers::set_mode(rollers::Mode::Store);
   chassis.pid_odom_set({{-47_in,-60_in}, fwd, 80});
   pros::delay(1100);
-  chassis.pid_odom_set({{-49_in,-28_in}, rev, 100});
+  chassis.pid_odom_set({{-48.5_in,-28_in}, rev, 100});
   pros::delay(800);
   rollers::set_mode(rollers::Mode::High);
   tongue.set_value(0);
@@ -209,9 +209,9 @@ void fourThreeLeft() {
   chassis.pid_wait_quick();
   distanceReset(RESET_RIGHT);
   pros::delay(100);
-  chassis.pid_turn_set(225, 127);
+  chassis.pid_turn_set(220, 127);
   chassis.pid_wait();
-  chassis.pid_drive_set(-11., 80);
+  chassis.pid_drive_set(-13.67, 80);
 
   //chassis.pid_odom_set({{-16_in,-12_in, 225_deg}, rev, 70});
   
@@ -223,17 +223,17 @@ void fourThreeLeft() {
   //chassis.odom_xy_set(-10_in,-10_in);
   
   
-  chassis.pid_odom_set({{-33_in,-30_in}, fwd, 90});
+  chassis.pid_odom_set({{-35_in,-30_in}, fwd, 90});
   tongue.set_value(0);
 
   rollers::set_mode(rollers::Mode::Stop);
-  /*
+  
   chassis.pid_wait_quick();
   chassis.pid_turn_set(180, TURN_SPEED);
   chassis.pid_wait_quick();
   distanceReset(RESET_RIGHT);
   wing.set_value(0);
-  chassis.pid_odom_set({{-38_in,-16_in}, rev, 100});
+  chassis.pid_odom_set({{-38_in,-18.67_in}, rev, 100});
   chassis.pid_wait_quick();
-  pros::delay(3000);*/
+  pros::delay(3000);
 }

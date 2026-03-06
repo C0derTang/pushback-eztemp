@@ -163,6 +163,35 @@ void sevBallLeft() {
 // 7ball hook wing right
 ///
 void sevBallRight() {
+  auton_running = true;
+  rollers::set_voltage(12000);
+  chassis.odom_xyt_set(18_in,-56_in, 0_deg);
+  pros::delay(10);
+  distanceReset(RESET_RIGHT | RESET_BACK);
+  rollers::set_mode(rollers::Mode::Store);
+  chassis.pid_odom_set({{24_in,-26.7_in}, fwd, 100});
+  pros::delay(500);
+  tongue.set_value(true);
+  chassis.pid_wait_quick();
+  chassis.pid_turn_set(320, 90);
+  chassis.pid_wait_quick();
+  chassis.pid_odom_set({{43_in,-50_in}, rev, 120});
+  chassis.pid_wait_quick();
+  tongue.set_value(0);
+  chassis.pid_turn_set(180, 90);
+
+  chassis.pid_wait();
+  distanceReset(RESET_LEFT);
+  tongue.set_value(1);
+  pros::delay(670);
+  chassis.pid_odom_set({{49_in,-60_in}, fwd, 80});
+  pros::delay(1000);
+  
+  chassis.pid_odom_set({{50_in,-28_in}, rev, 90});
+  pros::delay(1000);
+  rollers::set_mode(rollers::Mode::High);
+  pros::delay(3000);
+  tongue.set_value(0);
 
 }
 

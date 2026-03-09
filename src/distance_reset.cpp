@@ -83,7 +83,8 @@ static void apply_sensor_ray(
 void distanceReset(uint8_t flags, double min_mm, double max_mm) {
   const double cur_x_in = chassis.odom_x_get();
   const double cur_y_in = chassis.odom_y_get();
-  const double heading_deg = wrap_deg_360(chassis.odom_theta_get());
+  const double orig_heading = chassis.odom_theta_get();
+  const double heading_deg = wrap_deg_360(orig_heading);
 
   const Vec2 f = forward_unit(heading_deg);
   const Vec2 r = right_unit(heading_deg);
@@ -131,5 +132,5 @@ void distanceReset(uint8_t flags, double min_mm, double max_mm) {
   if (have_x && x_n > 0) new_x_in = x_sum / x_n;
   if (have_y && y_n > 0) new_y_in = y_sum / y_n;
 
-  chassis.odom_xyt_set(new_x_in * 1_in, new_y_in * 1_in, heading_deg * 1_deg);
+  chassis.odom_xyt_set(new_x_in * 1_in, new_y_in * 1_in, orig_heading * 1_deg);
 }

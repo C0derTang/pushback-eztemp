@@ -249,6 +249,12 @@ void sevBallRight() {
   rollers::set_mode(rollers::Mode::High);
   tongue.set_value(0);
   pros::delay(1867);
+  chassis.pid_drive_set(6_in, 60);
+  chassis.pid_wait_quick();
+  rollers::set_mode(rollers::Mode::Store);
+  chassis.pid_drive_set(-10_in, 120);
+  pros::delay(800);
+
   wing.set_value(0);
   chassis.odom_xy_set(0_in,0_in);
   chassis.pid_odom_set({{6_in,-7_in}, fwd, 100});

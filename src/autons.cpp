@@ -71,14 +71,14 @@ void sob() {
   chassis.pid_wait();
   
   chassis.pid_turn_set(180, TURN_SPEED);
-  chassis.pid_wait_quick_chain();
+  chassis.pid_wait_quick();
   
   tongue.set_value(1);
   pros::delay(200);
 
   distanceReset(RESET_LEFT);
   rollers::set_mode(rollers::Mode::Store);
-  chassis.pid_odom_set({{48_in,-59.867_in}, fwd, 70});
+  chassis.pid_odom_set({{47_in,-59.867_in}, fwd, 70});
   pros::delay(1200);
   chassis.pid_odom_set({{49_in,-27_in}, rev, 100});
   pros::delay(800);
@@ -138,11 +138,12 @@ void sob() {
 ///
 // 75 route
 ///
-void skills() {
-    auton_running = true;
+void skills() {\
+  // get 1st matchloader
+  auton_running = true;
   rollers::set_voltage(12000);
   chassis.odom_xyt_set(0_in,-48_in, 90_deg);
-    chassis.odom_xyt_set(-18_in,-48_in, 90_deg);
+  chassis.odom_xyt_set(-18_in,-48_in, 90_deg);
   pros::delay(10);
   distanceReset(RESET_RIGHT | RESET_BACK);
   
@@ -150,15 +151,22 @@ void skills() {
   chassis.pid_wait();
   
   chassis.pid_turn_set(180, 100);
-  chassis.pid_wait_quick_chain();
+  chassis.pid_wait_quick();
   
   tongue.set_value(1);
   pros::delay(200);
 
   distanceReset(RESET_RIGHT);
   rollers::set_mode(rollers::Mode::Store);
-  chassis.pid_odom_set({{-47.3_in,-60_in}, fwd, 80});
-  pros::delay(2500);
+  chassis.pid_odom_set({{-47.67_in,-60.8_in}, fwd, 70});
+  pros::delay(1200);
+  pros::delay(1000);
+  rollers::set_mode(rollers::Mode::Low);
+  pros::delay(50);
+  rollers::set_mode(rollers::Mode::Store);
+  pros::delay(1400);
+
+  //left hallway
   chassis.pid_odom_set({{-49_in,-48_in}, rev, 80});
   chassis.pid_wait();
   chassis.pid_odom_set({{-56_in,-36_in}, rev, 100});
@@ -166,7 +174,7 @@ void skills() {
   chassis.pid_turn_set(180, 90);
   chassis.pid_wait();
   distanceReset(RESET_RIGHT | RESET_BACK);
-  chassis.pid_odom_set({{-60_in,40_in}, rev, 100});
+  chassis.pid_odom_set({{-62_in,40_in}, rev, 100});
   chassis.pid_wait_quick();
   distanceReset(RESET_RIGHT | RESET_BACK);
   pros::delay(10);
@@ -175,6 +183,7 @@ void skills() {
   distanceReset(RESET_LEFT | RESET_BACK);
   pros::delay(10);
 
+  //score long goal
   chassis.pid_odom_set({{-52_in,43_in}, fwd, 100});
   chassis.pid_wait_quick();
   chassis.pid_turn_set(0, 90);
@@ -184,26 +193,143 @@ void skills() {
   chassis.pid_odom_set({{-50_in,28_in}, rev, 100});
   pros::delay(670);
   rollers::set_mode(rollers::Mode::High);
+  chassis.drive_set(-20, -20);
   pros::delay(2000);
-  distanceReset(RESET_LEFT);
   chassis.pid_turn_set(0, 90);
   chassis.pid_wait();
-  chassis.pid_drive_set(26.7_in, 76);
-  pros::delay(500);
+  distanceReset(RESET_LEFT);
+  
+  //get 2nd matchloader
+  chassis.odom_y_set(30_in);
+  chassis.pid_odom_set({{-47_in,58.67_in}, fwd, 56});
+  pros::delay(1000);
+  //rollers::set_mode(rollers::Mode::Low);
+  pros::delay(100);
   rollers::set_mode(rollers::Mode::Store);
-  pros::delay(2500);
-  chassis.pid_odom_set({{-50_in,28_in}, rev, 100});
+  pros::delay(1800);
+  //score 2nd matchloader
+  chassis.pid_odom_set({{-50_in,27_in}, rev, 100});
+  pros::delay(1000);
+  rollers::set_mode(rollers::Mode::High);
+  chassis.drive_set(-20, -20);
+  pros::delay(2300);
+  tongue.set_value(0);
+  chassis.pid_drive_set(3_in, 60);
+  chassis.pid_wait_quick();
+  rollers::set_mode(rollers::Mode::Stop);
+  pros::delay(100);
+  chassis.pid_drive_set(-10_in, 60);
+  pros::delay(900);
+  chassis.pid_turn_set(0, 90);
+    //commute to 3rd match loader
+
+  chassis.pid_wait();
+  chassis.odom_y_set(30_in);
+  chassis.pid_drive_set(11_in, 80);
+  chassis.pid_wait_quick();
+  chassis.pid_turn_set(274, 90);
+  chassis.pid_wait();
+  chassis.pid_drive_set(-50_in, 67);
+  chassis.pid_wait_quick();
+  pros::delay(200);
+  distanceReset(RESET_RIGHT | RESET_BACK);
+  chassis.pid_odom_set({{45.2_in,40_in}, rev, 90});
+  chassis.pid_wait();
+  //distanceReset(RESET_RIGHT | RESET_BACK);
+  
+  //3rd match loader
+  chassis.pid_turn_set(0, 90);
+  chassis.pid_wait();
+  chassis.drive_set(-67, -67);
+  pros::delay(1000);
+  rollers::set_mode(rollers::Mode::Store);
+  chassis.pid_turn_set(0, 90);
+  chassis.pid_wait();
+  distanceReset(RESET_RIGHT);
+  chassis.odom_y_set(30_in);
+  tongue.set_value(1);
+  pros::delay(300);
+  chassis.pid_odom_set({{50_in,57.67_in}, fwd, 55});
+  pros::delay(3000);
+  chassis.pid_drive_set(-6_in, 60);
+  pros::delay(1000);
+
+
+  //2nd hallway
+  chassis.pid_odom_set({{48_in,40_in}, rev, 90}); 
+  chassis.pid_odom_set({{56_in,30_in}, rev, 100});
+  chassis.pid_wait_quick_chain();
+  chassis.pid_turn_set(0, 90);
+  chassis.pid_wait();
+  distanceReset(RESET_RIGHT | RESET_BACK);
+  pros::delay(200);
+  chassis.pid_odom_set({{56_in,-47_in}, rev, 100});
+  chassis.pid_wait_quick();
+  distanceReset(RESET_RIGHT | RESET_BACK);
+  pros::delay(10);
+  chassis.pid_turn_set(270, 90);
+  chassis.pid_wait();
+  distanceReset(RESET_LEFT | RESET_BACK);
+  pros::delay(10);
+
+  //score 3rd matchloa
+  chassis.pid_odom_set({{52_in,-44_in}, fwd, 100});
+  chassis.pid_wait_quick();
+  chassis.pid_turn_set(180, 100);
+  chassis.pid_wait();
+  distanceReset(RESET_LEFT);
+
+  chassis.pid_odom_set({{52_in,-28_in}, rev, 100});
   pros::delay(670);
   rollers::set_mode(rollers::Mode::High);
+  chassis.drive_set(-20, -20);
   pros::delay(2000);
-  tongue.set_value(0);
-  chassis.pid_drive_set(13_in, 80);
-  chassis.pid_wait_quick();
-  chassis.pid_turn_set(90, 90);
+  chassis.odom_theta_set(180_deg);
+  
+  //distanceReset(RESET_LEFT);
+  //4th matchloader+score
+  chassis.pid_turn_set(177, 100);
   chassis.pid_wait();
-  chassis.pid_drive_set(13_in, 80);
+  chassis.odom_xy_set(43_in, -27_in);
+  chassis.pid_odom_set({{45_in,-56.7_in}, fwd, 56});
+  pros::delay(1000);
+  //rollers::set_mode(rollers::Mode::Low);
+  pros::delay(100);
+  rollers::set_mode(rollers::Mode::Store);
+  pros::delay(1900);
+  chassis.pid_odom_set({{43.5_in,-27_in}, rev, 100});
+  pros::delay(1000);
+  rollers::set_mode(rollers::Mode::High);
+  chassis.drive_set(-20, -20);
+
+  pros::delay(2300);
+  tongue.set_value(0);
+  chassis.pid_drive_set(3_in, 60);
   chassis.pid_wait_quick();
-  distanceReset(RESET_LEFT | RESET_BACK);
+  rollers::set_mode(rollers::Mode::Stop);
+  chassis.pid_drive_set(-10_in, 60);
+  pros::delay(900);
+
+  chassis.pid_turn_set(180, 90);
+  chassis.pid_wait();
+  chassis.odom_y_set(30_in);
+  chassis.pid_drive_set(11_in, 80);
+  chassis.pid_wait();
+  chassis.pid_turn_set(225, 90);
+  chassis.pid_wait();
+  chassis.pid_odom_set({{24.67_in,-6.7_in}, fwd, 80});
+  chassis.pid_wait();
+  chassis.pid_turn_set(240, 90);
+  chassis.pid_wait();
+  rollers::set_mode(rollers::Mode::Store);
+  chassis.drive_set(70, 70);
+  pros::delay(670);
+  while(backWall.get() < 1800) pros::delay(30);
+  chassis.drive_set(-80, -80);
+  pros::delay(400);
+  rollers::set_mode(rollers::Mode::Stop);
+  chassis.drive_set(0, 0);
+
 
 }
 

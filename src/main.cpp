@@ -66,7 +66,7 @@ void initialize() {
   chassis.initialize();
   ez::as::initialize();
   master.rumble(chassis.drive_imu_calibrated() ? "." : "---");
-  chassis.pid_tuner_full_enable(true);
+  chassis.pid_tuner_full_enable(false);
 
   rollers::init(12000);
 
@@ -255,11 +255,12 @@ void ez_template_extras() {
  */
 
 void opcontrol() {
-  auton_running = false;
   // This is preference to what you like to drive on
   chassis.drive_brake_set(MOTOR_BRAKE_COAST);
   bool tval = false;
   while (true) {
+    auton_running = false;
+
     // Gives you some extras to make EZ-Template ezier
     ez_template_extras();
 

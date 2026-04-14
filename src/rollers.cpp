@@ -49,7 +49,7 @@ void update() {
   else ++g_frame;
 
   const bool warmup_mid  = (g_mode == Mode::Mid  && g_frame < 7);
-  const bool warmup_high = (g_mode == Mode::High && g_frame < 3);
+  const bool warmup_high = (g_mode == Mode::High && g_frame < 2);
 
   if (warmup_mid || warmup_high) {
     apply_direct(Mode::Low, 9000);

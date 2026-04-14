@@ -6,14 +6,17 @@
 #include "subsystems.hpp"
 #include "EZ-Template/api.hpp"
 
-static constexpr double LEFT_OFF_X_IN  = -3.5;
-static constexpr double LEFT_OFF_Y_IN  = +5.75;
+static constexpr double LEFT_OFF_X_IN   = -3.5;
+static constexpr double LEFT_OFF_Y_IN   = +5.75;
 
-static constexpr double RIGHT_OFF_X_IN = +3.5;
-static constexpr double RIGHT_OFF_Y_IN = +5.75;
+static constexpr double RIGHT_OFF_X_IN  = +3.5;
+static constexpr double RIGHT_OFF_Y_IN  = +5.75;
 
-static constexpr double BACK_OFF_X_IN  = +5.4;
-static constexpr double BACK_OFF_Y_IN  = -1.5;
+static constexpr double BACK_OFF_X_IN   = +5.4;
+static constexpr double BACK_OFF_Y_IN   = -1.5;
+
+static constexpr double FRONT_OFF_X_IN  = -5.4;
+static constexpr double FRONT_OFF_Y_IN  = +6.5;
 
 static constexpr double WALL_LEFT_X  = -72.0;
 static constexpr double WALL_RIGHT_X = +72.0;
@@ -122,6 +125,17 @@ void distanceReset(uint8_t flags, double min_mm, double max_mm) {
       const double d_in = mm_to_in(mm);
       apply_sensor_ray(heading_deg, d_in, BACK_OFF_X_IN, BACK_OFF_Y_IN,
                        Vec2{-f.x, -f.y},
+                       have_x, have_y, x_sum, x_n, y_sum, y_n);
+    }
+  }
+
+  // Front sensor beam points robot-front = +f
+  if (flags & RESET_FRONT) {
+    const double mm = static_cast<double>(frontWall.get());
+    if (valid_mm(mm, min_mm, max_mm)) {
+      const double d_in = mm_to_in(mm);
+      apply_sensor_ray(heading_deg, d_in, FRONT_OFF_X_IN, FRONT_OFF_Y_IN,
+                       Vec2{f.x, f.y},
                        have_x, have_y, x_sum, x_n, y_sum, y_n);
     }
   }

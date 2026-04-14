@@ -6,6 +6,7 @@
 constexpr uint8_t RESET_LEFT  = 1 << 0;
 constexpr uint8_t RESET_RIGHT = 1 << 1;
 constexpr uint8_t RESET_BACK  = 1 << 2;
+constexpr uint8_t RESET_FRONT = 1 << 3;
 // (Optional if you add a front sensor later)
 // constexpr uint8_t RESET_FRONT = 1 << 3;
 
